@@ -65,7 +65,7 @@ def print_fasta_info(rec_dict):
 
     max_gene_len = max(gene_len.values())
     min_gene_len = min(gene_len.values())
-    print("seq_id GENE LENGTH : ", max_gene_len)
+    print("MAX GENE LENGTH : ", max_gene_len)
     print("MIN GENE LENGTH : ", min_gene_len)
 
     max_count = 0
@@ -74,17 +74,17 @@ def print_fasta_info(rec_dict):
     for k, val in gene_len.items():
         if val == max_gene_len:
             max_count += 1
-            print("seq_id KEY : ", k)
+            print("MAX KEY : ", k)
         if val == min_gene_len:
             min_count += 1
             print("MIN KEY : ", k)
 
-    print("seq_id COUNT : ", max_count)
+    print("MAX COUNT : ", max_count)
     print("MIN COUNT : ", min_count)
     print('\n')
 
 
-def orf_lengths(r_dict):
+def orf_lengths(r_dict, orf_start=0):
     """    These are called reading frames 1, 2, and 3 respectively.
     An open reading frame (ORF) is the part of a reading frame that has the
     potential to encode a protein. It starts with a start codon (ATG), and ends
@@ -109,7 +109,7 @@ def orf_lengths(r_dict):
             codon = dna[i:i+3].lower()
             if codon in stop_codons:
                 return i+3
-        return i
+        return 0
 
     result_list = []
 
@@ -117,7 +117,7 @@ def orf_lengths(r_dict):
         inner_dict = {} #contains orf as keys and length as values
         outer_dict = {} #contains seq_id as keys and inner_dict{} as values
 
-        frame = 2 # start of open reading frame
+        frame = orf_start # start of open reading frame
         pos = 0 + frame
         pos_start = 0
         orf_len = 0
@@ -143,7 +143,8 @@ def orf_lengths(r_dict):
             max_value = max(inner_dict.values())
             freq = sum(x == max_value for x in inner_dict.values())
 
-        result_list.append((seq_id, max_key[:10], max_value , freq))
+        result_list.append((max_value, seq_id, freq, \
+                            dna.find(max_key)+1, max_key[:40]))
 
     return result_list
 
@@ -225,7 +226,7 @@ def print_repeat_info(r_dict, num):
     seqdict, repeatdict = loop_repeats(r_dict, num)
 
     for seq_id in seqdict:
-        print(seq_id, *seqdict[seq_id].items(), sep='\n')
+        # print(seq_id, *seqdict[seq_id].items(), sep='\n')
         leng = [k for k,v in seqdict[seq_id].items() \
             if v == max(seqdict[seq_id].values())]
         print ('MAX = ', max(seqdict[seq_id].values()) \
@@ -244,12 +245,12 @@ if __name__ == '__main__':
     # dna = create_dna(10000)
     # explore_blast(dna)
 
-    FASTA_FILE = "data//fasta//dna_example.fasta"
+    # FASTA_FILE = "data//fasta//dna_example.fasta"
+    FASTA_FILE = "data//fasta//dna2.fasta"
     record_dict = SeqIO.index(FASTA_FILE, "fasta")
 
     print_fasta_info(record_dict)
-    print(*orf_lengths(record_dict),'\n',sep='\n')
-    print_repeat_info(record_dict, 12)
+    print(*orf_lengths(record_dict, orf_start = 2),'\n',sep='\n')
+    print_repeat_info(record_dict, 7)
 
     record_dict.close()
-    
